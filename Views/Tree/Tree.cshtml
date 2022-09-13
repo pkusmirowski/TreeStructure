@@ -2,11 +2,20 @@
 @{
     var tree = Model.InverseParent;
     var values = new Dictionary<int, string>();
+    
     if (Model.InverseParent != null)
     {
         await GetAllItems(Model.InverseParent, values);
     }
     <div>
+        @if(ViewBag.Success != null)
+        {
+            <h4 class="text-success">@ViewBag.Success</h4>
+        }
+        else if(ViewBag.Failure != null)
+        {
+            <h4 class="text-danger">@ViewBag.Failure</h4>
+        }
         <ul>
             <li>
                 <span class="caret">@Model.Folder</span>

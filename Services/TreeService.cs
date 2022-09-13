@@ -76,12 +76,12 @@ namespace TreeStructure.Services
             return true;
         }
 
-        public bool MoveElement(int id, int newId)
+        public async Task<bool> MoveElement(int id, int newId)
         {
             List<Tree> parent = GetParent(id);
             parent[0].ParentId = newId;
             _context.Update(parent[0]);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return true;
         }

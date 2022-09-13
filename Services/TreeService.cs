@@ -15,22 +15,34 @@ namespace TreeStructure.Services
 
         public TreeVM DisplayTree()
         {
-            var lookupId = _context.Trees.ToLookup(x => x.ParentId);
-            var treeElements = lookupId[null].SelectRecursive(x => lookupId[x.Id]).ToList();
-
-            var root = treeElements[0];
-
-            return new TreeVM
+            try
             {
-                Id = root.Id,
-                Folder = root.Folder,
-                ParentId = root.Id,
-                InverseParent = root.InverseParent
-            };
+                var lookupId = _context.Trees.ToLookup(x => x.ParentId);
+                var treeElements = lookupId[null].SelectRecursive(x => lookupId[x.Id]).ToList();
+
+                var root = treeElements[0];
+
+                return new TreeVM
+                {
+                    Id = root.Id,
+                    Folder = root.Folder,
+                    ParentId = root.Id,
+                    InverseParent = root.InverseParent
+                };
+            }
+            catch(Exception)
+            {
+                return new TreeVM();
+            }
         }
 
         public async Task<bool> AddElement(int id, string name)
         {
+            if(id == 0)
+            {
+                return false;
+            }
+
             var newElement = new Tree
             {
                 Folder = name,
@@ -45,6 +57,11 @@ namespace TreeStructure.Services
 
         public async Task<bool> DeleteElement(int id)
         {
+            if (id == 0)
+            {
+                return false;
+            }
+
             List<Tree> parent = GetParent(id);
 
             if (parent[0].InverseParent.Count == 0)
@@ -68,6 +85,11 @@ namespace TreeStructure.Services
 
         public async Task<bool> EditElement(int id, string name)
         {
+            if (id == 0)
+            {
+                return false;
+            }
+
             List<Tree> parent = GetParent(id);
 
             parent[0].Folder = name;
@@ -78,6 +100,11 @@ namespace TreeStructure.Services
 
         public async Task<bool> MoveElement(int id, int newId)
         {
+            if (id == 0 || newId == 0)
+            {
+                return false;
+            }
+
             List<Tree> parent = GetParent(id);
             parent[0].ParentId = newId;
             _context.Update(parent[0]);

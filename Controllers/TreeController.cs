@@ -12,9 +12,18 @@ namespace TreeStructure.Controllers
             _treeServce = treeServce;
         }
 
+        public IActionResult Error()
+        {
+            return View();
+        }
+
         public IActionResult Tree()
         {
             var tree = _treeServce.DisplayTree();
+            if(tree == null || tree.Id == 0)
+            {
+                return View("Error");
+            }
             string success = (string)TempData["Success"];
             string failure = (string)TempData["Failure"];
             ViewBag.Success = success;

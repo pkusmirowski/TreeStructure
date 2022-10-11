@@ -20,7 +20,7 @@ namespace TreeStructure.Controllers
         public IActionResult Tree()
         {
             var tree = _treeServce.DisplayTree();
-            if(tree == null || tree.Id == 0)
+            if (tree == null || tree.Id == 0)
             {
                 return View("Error");
             }

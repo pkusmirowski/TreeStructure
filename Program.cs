@@ -1,17 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using TreeStructure.Models;
 using TreeStructure.Services;
-using Azure.Identity;
-using TreeStructure.ExtensionMethods;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string ConnectionString = Vault.GetSecretPhrase("TreeDB");
+//string ConnectionString = Vault.GetSecretPhrase("TreeDB");
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
-builder.Services.AddDbContext<TreeDBContext>(options => options.UseSqlServer(ConnectionString));
+var connectionString = builder.Configuration.GetConnectionString("TreeDBConnection");
+builder.Services.AddDbContext<TreeDBContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddTransient<TreeService>();
 var app = builder.Build();
 

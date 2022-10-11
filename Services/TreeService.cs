@@ -30,7 +30,7 @@ namespace TreeStructure.Services
                     InverseParent = root.InverseParent
                 };
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return new TreeVM();
             }
@@ -38,7 +38,7 @@ namespace TreeStructure.Services
 
         public async Task<bool> AddElement(int id, string name)
         {
-            if(id == 0)
+            if (id == 0)
             {
                 return false;
             }

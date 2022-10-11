@@ -1,12 +1,13 @@
 {
   "dependencies": {
     "secrets1": {
-      "type": "secrets",
-      "connectionId": "VaultUri"
+      "ignored": "true",
+      "type": "secrets.keyVault"
     },
     "mssql1": {
+      "ignored": "true",
       "type": "mssql",
-      "connectionId": "TreeDB"
+      "connectionId": "ConnectionStrings:TreeDBConnection"
     }
   }
 }

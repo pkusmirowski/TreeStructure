@@ -15,25 +15,18 @@ namespace TreeStructure.Services
 
         public TreeVM DisplayTree()
         {
-            try
-            {
-                var lookupId = _context.Trees.ToLookup(x => x.ParentId);
-                var treeElements = lookupId[null].SelectRecursive(x => lookupId[x.Id]).ToList();
+            var lookupId = _context.Trees.ToLookup(x => x.ParentId);
+            var treeElements = lookupId[null].SelectRecursive(x => lookupId[x.Id]).ToList();
 
-                var root = treeElements[0];
+            var root = treeElements[0];
 
-                return new TreeVM
-                {
-                    Id = root.Id,
-                    Folder = root.Folder,
-                    ParentId = root.Id,
-                    InverseParent = root.InverseParent
-                };
-            }
-            catch (Exception)
+            return new TreeVM
             {
-                return new TreeVM();
-            }
+                Id = root.Id,
+                Folder = root.Folder,
+                ParentId = root.Id,
+                InverseParent = root.InverseParent
+            };
         }
 
         public async Task<bool> AddElement(int id, string name)
@@ -62,25 +55,23 @@ namespace TreeStructure.Services
                 return false;
             }
 
-            List<Tree> parent = GetParent(id);
+            var parent = GetParent(id);
 
-            if (parent[0].InverseParent.Count == 0)
+            if (parent.Count > 0)
             {
-                _context.Remove(parent[0]);
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                foreach (var child in parent)
+                var parentNode = parent[0];
+
+                if (parentNode.InverseParent.Count > 0)
                 {
-                    if (child.InverseParent.Count > 0)
-                    {
-                        await DeleteChild(child.InverseParent);
-                    }
+                    await DeleteChild(parentNode.InverseParent);
                 }
-                await DeleteElement(id);
+
+                _context.Remove(parentNode);
+                await _context.SaveChangesAsync();
+                return true;
             }
-            return true;
+
+            return false;
         }
 
         public async Task<bool> EditElement(int id, string name)
@@ -90,12 +81,17 @@ namespace TreeStructure.Services
                 return false;
             }
 
-            List<Tree> parent = GetParent(id);
+            var parent = GetParent(id);
 
-            parent[0].Folder = name;
-            _context.Update(parent[0]);
-            await _context.SaveChangesAsync();
-            return true;
+            if (parent.Count > 0)
+            {
+                parent[0].Folder = name;
+                _context.Update(parent[0]);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
         }
 
         public async Task<bool> MoveElement(int id, int newId)
@@ -105,12 +101,17 @@ namespace TreeStructure.Services
                 return false;
             }
 
-            List<Tree> parent = GetParent(id);
-            parent[0].ParentId = newId;
-            _context.Update(parent[0]);
-            await _context.SaveChangesAsync();
+            var parent = GetParent(id);
 
-            return true;
+            if (parent.Count > 0)
+            {
+                parent[0].ParentId = newId;
+                _context.Update(parent[0]);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
         }
 
         private List<Tree> GetParent(int id)
@@ -120,21 +121,19 @@ namespace TreeStructure.Services
             return treeElements.Where(res => res.Id == id).ToList();
         }
 
-        private async Task<bool> DeleteChild(ICollection<Tree> child)
+        private async Task DeleteChild(ICollection<Tree> child)
         {
             foreach (var children in child)
             {
-                if (children.InverseParent.Count == 0)
-                {
-                    _context.Remove(children);
-                    await _context.SaveChangesAsync();
-                }
-                else
+                if (children.InverseParent.Count > 0)
                 {
                     await DeleteChild(children.InverseParent);
                 }
+
+                _context.Remove(children);
             }
-            return true;
+
+            await _context.SaveChangesAsync();
         }
     }
 }

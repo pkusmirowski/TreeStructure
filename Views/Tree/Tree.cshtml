@@ -7,32 +7,30 @@
     {
         await GetAllItems(Model.InverseParent, values);
     }
-    <div>
-        @if (ViewBag.Success != null)
-        {
-            <h4 class="text-success">@ViewBag.Success</h4>
-        }
-        else if (ViewBag.Failure != null)
-        {
-            <h4 class="text-danger">@ViewBag.Failure</h4>
-        }
-        <ul>
-            <li>
-                <span class="caret">@Model.Folder</span>
+<div>
+    @if (ViewBag.Success != null)
+    {
+        <h4 class="text-success">@ViewBag.Success</h4>
+    }
+    else if (ViewBag.Failure != null)
+    {
+        <h4 class="text-danger">@ViewBag.Failure</h4>
+    }
+    <ul id="tree">
+        <li>
+                <span class="caret caret-down">@Model.Folder</span>
                 <div class="btn-group test">
-                    <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">Opcje</button>
+                    <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Opcje</button>
                     <ul class="dropdown-menu col">
                         <li>
-                            <button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                                data-target="#addModal">Dodaj</button>
+                            <button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal" data-target="#addModal">Dodaj</button>
                         </li>
                     </ul>
                 </div>
                 <form asp-action="AddElement" method="post">
                     <!-- Modal Dodaj-->
                     <div class="modal fade" id="addModal" tabindex="-1" role="dialog"
-                        aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered" role="document">
                             <div class="modal-content">
                                 <div class="modal-header">
@@ -62,22 +60,40 @@
                                 <span class="caret">@item.Folder</span>
                                 <div class="btn-group">
                                     <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                                aria-expanded="false">Opcje</button>
+                                            aria-expanded="false">
+                                        Opcje
+                                    </button>
                                     <ul class="dropdown-menu">
-                                        <li><button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                                        data-target="#addModal@(count)">Dodaj</button></li>
-                                        <li><button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                                        data-target="#deleteModal@(count)">Usuń</button></li>
-                                        <li><button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                                        data-target="#editModal@(count)">Zmień</button></li>
-                                        <li><button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                                        data-target="#moveModal@(count)">Przenieś</button></li>
+                                        <li>
+                                            <button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
+                                                    data-target="#addModal@(count)">
+                                                Dodaj
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
+                                                    data-target="#deleteModal@(count)">
+                                                Usuń
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
+                                                    data-target="#editModal@(count)">
+                                                Zmień
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
+                                                    data-target="#moveModal@(count)">
+                                                Przenieś
+                                            </button>
+                                        </li>
                                     </ul>
                                 </div>
                                 <form asp-action="AddElement" method="post">
                                     <!-- Modal Dodaj-->
-                            <div class="modal fade" id="addModal@(count)" tabindex="-1" role="dialog"
-                                aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                                    <div class="modal fade" id="addModal@(count)" tabindex="-1" role="dialog"
+                                         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered" role="document">
                                             <div class="modal-content">
                                                 <div class="modal-header">
@@ -100,8 +116,8 @@
                                 </form>
                                 <form asp-action="DeleteElement" method="post">
                                     <!-- Modal Usuń-->
-                            <div class="modal fade" id="deleteModal@(count)" tabindex="-1" role="dialog"
-                                aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                                    <div class="modal fade" id="deleteModal@(count)" tabindex="-1" role="dialog"
+                                         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered" role="document">
                                             <div class="modal-content">
                                                 <div class="modal-header">
@@ -122,8 +138,8 @@
                                 </form>
                                 <form asp-action="EditElement" method="post">
                                     <!-- Modal Edytuj-->
-                            <div class="modal fade" id="editModal@(count)" tabindex="-1" role="dialog"
-                                aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                                    <div class="modal fade" id="editModal@(count)" tabindex="-1" role="dialog"
+                                         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered" role="document">
                                             <div class="modal-content">
                                                 <div class="modal-header">
@@ -146,8 +162,8 @@
                                 </form>
                                 <form asp-action="MoveElement" method="post">
                                     <!-- Modal Przenieś-->
-                            <div class="modal fade" id="moveModal@(count)" tabindex="-1" role="dialog"
-                                aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                                    <div class="modal fade" id="moveModal@(count)" tabindex="-1" role="dialog"
+                                         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered" role="document">
                                             <div class="modal-content">
                                                 <div class="modal-header">
@@ -319,6 +335,7 @@
         }
     }
 }
+
 @functions
 {
     private async Task GetAllItems(ICollection<TreeStructure.Models.Tree> children, Dictionary<int, string> lista)

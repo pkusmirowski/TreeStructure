@@ -1,10 +1,10 @@
-﻿using TreeStructure.ExtensionMethods;
+﻿using Microsoft.EntityFrameworkCore;
 using TreeStructure.Models;
 using TreeStructure.VM;
 
 namespace TreeStructure.Services
 {
-    public class TreeService
+    public class TreeService : ITreeService
     {
         private readonly TreeDBContext _context;
 
@@ -13,126 +13,148 @@ namespace TreeStructure.Services
             _context = context;
         }
 
-        public TreeVM DisplayTree()
+        public async Task<TreeVM?> DisplayTreeAsync()
         {
-            var lookupId = _context.Trees.ToLookup(x => x.ParentId);
-            var treeElements = lookupId[null].SelectRecursive(x => lookupId[x.Id]).ToList();
+            var lookupId = (await _context.Trees.ToListAsync()).ToLookup(x => x.ParentId);
+            var root = lookupId[null].FirstOrDefault();
 
-            var root = treeElements[0];
+            if (root == null)
+            {
+                return null;
+            }
 
             return new TreeVM
             {
                 Id = root.Id,
                 Folder = root.Folder,
-                ParentId = root.Id,
+                ParentId = root.ParentId,
                 InverseParent = root.InverseParent
             };
         }
 
-        public async Task<bool> AddElement(int id, string name)
+public async Task<bool> AddElementAsync(int id, string name)
+{
+    if (id == 0 || string.IsNullOrWhiteSpace(name))
+    {
+        return false;
+    }
+
+    try
+    {
+        var newElement = new Tree
         {
-            if (id == 0)
+            Folder = name,
+            ParentId = id
+        };
+
+        await _context.AddAsync(newElement);
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+    catch (DbUpdateException ex)
+    {
+        // Logowanie błędu
+        Console.WriteLine($"Błąd podczas dodawania elementu: {ex.Message}");
+        return false;
+    }
+}
+
+
+        public async Task<bool> DeleteElementAsync(int id)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var node = GetNodeById(id);
+                if (node == null)
+                {
+                    return false;
+                }
+
+                await DeleteChildrenRecursively(node);
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        }
+
+        public async Task<bool> EditElementAsync(int id, string name)
+        {
+            if (id == 0 || string.IsNullOrWhiteSpace(name))
             {
                 return false;
             }
 
-            var newElement = new Tree
+            var node = GetNodeById(id);
+            if (node == null)
             {
-                Folder = name,
-                ParentId = id
-            };
+                return false;
+            }
 
-            await _context.AddAsync(newElement);
+            node.Folder = name;
+            _context.Update(node);
             await _context.SaveChangesAsync();
 
             return true;
         }
 
-        public async Task<bool> DeleteElement(int id)
-        {
-            if (id == 0)
-            {
-                return false;
-            }
-
-            var parent = GetParent(id);
-
-            if (parent.Count > 0)
-            {
-                var parentNode = parent[0];
-
-                if (parentNode.InverseParent.Count > 0)
-                {
-                    await DeleteChild(parentNode.InverseParent);
-                }
-
-                _context.Remove(parentNode);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-
-            return false;
-        }
-
-        public async Task<bool> EditElement(int id, string name)
-        {
-            if (id == 0)
-            {
-                return false;
-            }
-
-            var parent = GetParent(id);
-
-            if (parent.Count > 0)
-            {
-                parent[0].Folder = name;
-                _context.Update(parent[0]);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-
-            return false;
-        }
-
-        public async Task<bool> MoveElement(int id, int newId)
+        public async Task<bool> MoveElementAsync(int id, int newId)
         {
             if (id == 0 || newId == 0)
             {
                 return false;
             }
 
-            var parent = GetParent(id);
-
-            if (parent.Count > 0)
+            var node = GetNodeById(id);
+            if (node == null)
             {
-                parent[0].ParentId = newId;
-                _context.Update(parent[0]);
-                await _context.SaveChangesAsync();
-                return true;
+                return false;
             }
 
-            return false;
+            node.ParentId = newId;
+            _context.Update(node);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
-        private List<Tree> GetParent(int id)
+        public async Task<List<TreeVM>> GetTreeListAsync()
         {
-            var lookupId = _context.Trees.ToLookup(x => x.ParentId);
-            var treeElements = lookupId[null].SelectRecursive(x => lookupId[x.Id]).ToList();
-            return treeElements.Where(res => res.Id == id).ToList();
-        }
+            var trees = await _context.Trees.ToListAsync();
 
-        private async Task DeleteChild(ICollection<Tree> child)
-        {
-            foreach (var children in child)
+            var treeList = trees.Select(tree => new TreeVM
             {
-                if (children.InverseParent.Count > 0)
-                {
-                    await DeleteChild(children.InverseParent);
-                }
+                Id = tree.Id,
+                Folder = tree.Folder,
+                ParentId = tree.ParentId
+            }).ToList();
 
-                _context.Remove(children);
+            return treeList;
+        }
+
+        private Tree? GetNodeById(int id)
+        {
+            return _context.Trees
+                .Include(x => x.InverseParent)
+                .FirstOrDefault(x => x.Id == id);
+        }
+
+        private async Task DeleteChildrenRecursively(Tree node)
+        {
+            foreach (var child in node.InverseParent.ToList())
+            {
+                await DeleteChildrenRecursively(child);
+                _context.Remove(child);
             }
 
+            _context.Remove(node);
             await _context.SaveChangesAsync();
         }
     }

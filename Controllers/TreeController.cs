@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TreeStructure.Models;
 using TreeStructure.Services;
 
 namespace TreeStructure.Controllers
 {
     public class TreeController : Controller
     {
-        private readonly TreeService _treeService;
+        private readonly ITreeService _treeService;
 
-        public TreeController(TreeService treeService)
+        public TreeController(ITreeService treeService)
         {
             _treeService = treeService;
         }
@@ -17,13 +18,17 @@ namespace TreeStructure.Controllers
             return View();
         }
 
-        public IActionResult Tree()
+        public async Task<IActionResult> Tree()
         {
-            var tree = _treeService.DisplayTree();
+            var tree = await _treeService.DisplayTreeAsync();
             if (tree == null || tree.Id == 0)
             {
                 return View("Error");
             }
+
+            var allItems = new Dictionary<int, string>();
+            await PopulateAllItems(tree.InverseParent, allItems, "");
+            ViewBag.Values = allItems;
 
             ViewBag.Success = TempData["Success"];
             ViewBag.Failure = TempData["Failure"];
@@ -31,10 +36,30 @@ namespace TreeStructure.Controllers
             return View(tree);
         }
 
+        private static async Task PopulateAllItems(ICollection<Tree>? children, Dictionary<int, string> lista, string prefix = "")
+        {
+            if (children == null || !children.Any())
+            {
+                return;
+            }
+
+            foreach (var child in children)
+            {
+                // Dodanie prefiksu do nazwy elementu (symbolizuje poziom hierarchii)
+                lista[child.Id] = $"{prefix}{child.Folder}";
+
+                if (child.InverseParent != null && child.InverseParent.Any())
+                {
+                    await PopulateAllItems(child.InverseParent, lista, prefix + "--");
+                }
+            }
+        }
+
+
         [HttpPost]
         public async Task<IActionResult> AddElementAsync(int id, string name)
         {
-            if (ModelState.IsValid && await _treeService.AddElement(id, name))
+            if (ModelState.IsValid && await _treeService.AddElementAsync(id, name))
             {
                 TempData["Success"] = "Dodanie powiodło się.";
                 return RedirectToAction("Tree");
@@ -47,7 +72,7 @@ namespace TreeStructure.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteElementAsync(int id)
         {
-            if (ModelState.IsValid && await _treeService.DeleteElement(id))
+            if (ModelState.IsValid && await _treeService.DeleteElementAsync(id))
             {
                 TempData["Success"] = "Usunięcie powiodło się.";
                 return RedirectToAction("Tree");
@@ -60,7 +85,7 @@ namespace TreeStructure.Controllers
         [HttpPost]
         public async Task<IActionResult> EditElementAsync(int id, string name)
         {
-            if (ModelState.IsValid && await _treeService.EditElement(id, name))
+            if (ModelState.IsValid && await _treeService.EditElementAsync(id, name))
             {
                 TempData["Success"] = "Edycja powiodła się.";
                 return RedirectToAction("Tree");
@@ -73,8 +98,13 @@ namespace TreeStructure.Controllers
         [HttpPost]
         public async Task<IActionResult> MoveElementAsync(int id, string newId)
         {
-            int newIdInt = Convert.ToInt32(newId);
-            if (ModelState.IsValid && await _treeService.MoveElement(id, newIdInt))
+            if (!int.TryParse(newId, out var newIdInt))
+            {
+                TempData["Failure"] = "Przeniesienie nie powiodło się – nieprawidłowy identyfikator.";
+                return RedirectToAction("Tree");
+            }
+
+            if (ModelState.IsValid && await _treeService.MoveElementAsync(id, newIdInt))
             {
                 TempData["Success"] = "Przeniesienie powiodło się.";
                 return RedirectToAction("Tree");

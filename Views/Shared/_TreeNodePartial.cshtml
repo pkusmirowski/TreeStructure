@@ -1,0 +1,46 @@
+﻿@model TreeStructure.Models.Tree
+
+<li>
+    <span>@Model.Folder</span>
+    <div class="btn-group">
+        <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            Opcje
+        </button>
+        <ul class="dropdown-menu">
+            <li>
+                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
+                        onclick="setModalData('@Model.Id', 'Dodaj element', '/Tree/AddElement', 'name', 'Wprowadź nazwę elementu:')">
+                    Dodaj
+                </button>
+            </li>
+            <li>
+                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
+                        onclick="setModalData('@Model.Id', 'Usuń element', '/Tree/DeleteElement', '', 'Czy na pewno chcesz usunąć ten element?')">
+                    Usuń
+                </button>
+            </li>
+            <li>
+                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
+                        onclick="setModalData('@Model.Id', 'Edytuj element', '/Tree/EditElement', 'name', 'Podaj nową nazwę elementu:')">
+                    Edytuj
+                </button>
+            </li>
+            <li>
+                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
+                        onclick="setModalData('@Model.Id', 'Przenieś element', '/Tree/MoveElement', 'newId', 'Wybierz nowego rodzica:')">
+                    Przenieś
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    @if (Model.InverseParent.Any())
+    {
+        <ul>
+            @foreach (var child in Model.InverseParent)
+            {
+                @await Html.PartialAsync("_TreeNodePartial", child)
+            }
+        </ul>
+    }
+</li>

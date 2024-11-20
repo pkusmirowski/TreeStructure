@@ -2,8 +2,8 @@
 {
     public class ErrorViewModel
     {
-        public string RequestId { get; init; } = "";
+        public string RequestId { get; init; } = string.Empty;
 
-        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+        public bool ShowRequestId => !string.IsNullOrWhiteSpace(RequestId);
     }
 }

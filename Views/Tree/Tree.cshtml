@@ -1,12 +1,5 @@
 ﻿@model TreeStructure.VM.TreeVM
-@{
-    var tree = Model.InverseParent;
-    var values = new Dictionary<int, string>();
 
-    if (Model.InverseParent != null)
-    {
-        await GetAllItems(Model.InverseParent, values);
-    }
 <div>
     @if (ViewBag.Success != null)
     {
@@ -16,340 +9,102 @@
     {
         <h4 class="text-danger">@ViewBag.Failure</h4>
     }
-    <ul id="tree">
-        <li>
-                <span class="caret caret-down">@Model.Folder</span>
-                <div class="btn-group test">
-                    <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Opcje</button>
-                    <ul class="dropdown-menu col">
-                        <li>
-                            <button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal" data-target="#addModal">Dodaj</button>
-                        </li>
-                    </ul>
-                </div>
-                <form asp-action="AddElement" method="post">
-                    <!-- Modal Dodaj-->
-                    <div class="modal fade" id="addModal" tabindex="-1" role="dialog"
-                         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="exampleModalLongTitle">Dodaj element</h5>
-                                </div>
-                                <div class="modal-body">
-                                    Wprowadź nazwę nowego elementu:
-                                    <input type="text" name="name" id="uname" pattern="[a-zA-Z0-9-]+" maxlength="40"
-                                        required>
-                                    <input type='hidden' name="id" value="@Model.Id" />
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-danger" data-dismiss="modal">Zamknij</button>
-                                    <input class="btn btn-primary" type="submit" value="Dodaj folder" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
+    <ul>
+        @if (Model.InverseParent != null && Model.InverseParent.Any())
+        {
+            @foreach (var node in Model.InverseParent)
+            {
+                @await Html.PartialAsync("_TreeNodePartial", node)
+            }
+        }
+    </ul>
+</div>
+
+
+<!-- Dynamiczny modal -->
+<div class="modal fade" id="actionModal" tabindex="-1" role="dialog" aria-labelledby="actionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="actionModalLabel"></h5>
+            </div>
+            <div class="modal-body">
+                <form id="modalForm" method="post">
+                    <input type="hidden" name="id" id="modalId" />
+                    <div id="modalContent"></div>
                 </form>
-                <ul class="nested">
-                    @if (tree != null && tree.Any())
-                    {
-                        var count = 0;
-                        @foreach (var item in tree)
-                        {
-                            <li>
-                                <span class="caret">@item.Folder</span>
-                                <div class="btn-group">
-                                    <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                                            aria-expanded="false">
-                                        Opcje
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li>
-                                            <button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                                                    data-target="#addModal@(count)">
-                                                Dodaj
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                                                    data-target="#deleteModal@(count)">
-                                                Usuń
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                                                    data-target="#editModal@(count)">
-                                                Zmień
-                                            </button>
-                                        </li>
-                                        <li>
-                                            <button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                                                    data-target="#moveModal@(count)">
-                                                Przenieś
-                                            </button>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <form asp-action="AddElement" method="post">
-                                    <!-- Modal Dodaj-->
-                                    <div class="modal fade" id="addModal@(count)" tabindex="-1" role="dialog"
-                                         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered" role="document">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="exampleModalLongTitle">Dodaj element</h5>
-                                                </div>
-                                                <div class="modal-body">
-                                                    Wprowadź nazwę nowego elementu:
-                                                    <input type="text" name="name" id="uname" pattern="[a-zA-Z0-9-]+" maxlength="40"
-                                                required>
-                                                    <input type='hidden' name="id" value="@item.Id" />
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-danger"
-                                                data-dismiss="modal">Zamknij</button>
-                                                    <input class="btn btn-primary" type="submit" value="Dodaj folder" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                                <form asp-action="DeleteElement" method="post">
-                                    <!-- Modal Usuń-->
-                                    <div class="modal fade" id="deleteModal@(count)" tabindex="-1" role="dialog"
-                                         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered" role="document">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="exampleModalLongTitle">Usuń element</h5>
-                                                </div>
-                                                <div class="modal-body">
-                                                    Czy na pewno chcesz usunąć element?
-                                                    <input type='hidden' name="id" value="@item.Id" />
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-danger"
-                                                data-dismiss="modal">Zamknij</button>
-                                                    <input class="btn btn-primary" type="submit" value="Usuń" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                                <form asp-action="EditElement" method="post">
-                                    <!-- Modal Edytuj-->
-                                    <div class="modal fade" id="editModal@(count)" tabindex="-1" role="dialog"
-                                         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered" role="document">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="exampleModalLongTitle">Edytuj element</h5>
-                                                </div>
-                                                <div class="modal-body">
-                                                    Podaj nową nazwę:
-                                                    <input type="text" name="name" id="uname" pattern="[a-zA-Z0-9-]+" maxlength="40"
-                                                required>
-                                                    <input type='hidden' name="id" value="@item.Id" />
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-danger"
-                                                data-dismiss="modal">Zamknij</button>
-                                                    <input class="btn btn-primary" type="submit" value="Zmień" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                                <form asp-action="MoveElement" method="post">
-                                    <!-- Modal Przenieś-->
-                                    <div class="modal fade" id="moveModal@(count)" tabindex="-1" role="dialog"
-                                         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered" role="document">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="exampleModalLongTitle">Przenieś element</h5>
-                                                </div>
-                                                <div class="modal-body">
-                                                    Wybierz gdzie chcesz przenieść element:
-                                                    <select class="form-select" multiple aria-label="multiple select example"
-                                                name="newId">
-                                                        <option value="@Model.Id">@Model.Folder</option>
-                                                        @foreach (var element in values)
-                                                        {
-                                                            <option value="@element.Key">@element.Value</option>
-                                                        }
-                                                    </select>
-                                                    <input type='hidden' name="id" value="@item.Id" />
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-danger"
-                                                data-dismiss="modal">Zamknij</button>
-                                                    <input class="btn btn-primary" type="submit" value="Przenieś" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                                @{
-                                    count++;
-                                }
-                                <ul class="nested">
-                                    @if (item.InverseParent.Count > 0)
-                                    {
-                                        await DisplayChildren(item.InverseParent, values);
-                                    }
-                                </ul>
-                            </li>
-                        }
-                    }
-                </ul>
-            </li>
-        </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                <button type="submit" form="modalForm" class="btn btn-primary">Zapisz</button>
+            </div>
+        </div>
     </div>
-}
+</div>
+@section Scripts {
+    <script>
+        // Funkcja do ustawiania danych w modalu
+        function setModalData(id, title, action, inputName, message) {
+            document.getElementById('actionModalLabel').innerText = title;
+            document.getElementById('modalForm').action = action;
+            document.getElementById('modalId').value = id;
 
-@functions
-{
-    private async Task DisplayChildren(ICollection<TreeStructure.Models.Tree> children, Dictionary<int, string> values)
-    {
-        if (children.Any())
-        {
-            @foreach (var child in children)
-            {
-                <li>
-                    <span class="caret">@child.Folder</span>
-                    <div class="btn-group">
-                        <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                aria-expanded="false">Opcje</button>
-                        <ul class="dropdown-menu">
-                            <li><button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                        data-target="#addModal@(child.Id)">Dodaj</button></li>
-                            <li><button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                        data-target="#deleteModal@(child.Id)">Usuń</button></li>
-                            <li><button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                        data-target="#editModal@(child.Id)">Zmień</button></li>
-                            <li><button type="button" class="btn btn-success btn-sm dropdown-item" data-toggle="modal"
-                        data-target="#moveModal@(child.Id)">Przenieś</button></li>
-                        </ul>
-                    </div>
-                    <form asp-action="AddElement" method="post">
-                        <!-- Modal Dodaj-->
-            <div class="modal fade" id="addModal@(child.Id)" role="dialog" aria-labelledby="exampleModalCenterTitle">
-                            <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="exampleModalLongTitle">Dodaj element</h5>
-                                    </div>
-                                    <div class="modal-body">
-                                        Wprowadź nazwę nowego elementu:
-                                        <input type="text" name="name" id="uname" pattern="[a-zA-Z0-9-]+" maxlength="40" required>
-                                        <input type='hidden' name="id" value="@child.Id" />
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-danger" data-dismiss="modal">Zamknij</button>
-                                        <input class="btn btn-primary" type="submit" value="Dodaj folder" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                    <form asp-action="DeleteElement" method="post">
-                        <!-- Modal Usuń-->
-            <div class="modal fade" id="deleteModal@(child.Id)" tabindex="-1" role="dialog"
-                aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="exampleModalLongTitle">Usuń element</h5>
-                                    </div>
-                                    <div class="modal-body">
-                                        Czy na pewno chcesz usunąć element?
-                                        <input type='hidden' name="id" value="@child.Id" />
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-danger" data-dismiss="modal">Zamknij</button>
-                                        <input class="btn btn-primary" type="submit" value="Usuń" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                    <form asp-action="EditElement" method="post">
-                        <!-- Modal Edytuj-->
-            <div class="modal fade" id="editModal@(child.Id)" tabindex="-1" role="dialog"
-                aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="exampleModalLongTitle">Edytuj element</h5>
-                                    </div>
-                                    <div class="modal-body">
-                                        Podaj nową nazwę:
-                                        <input type="text" name="name" id="uname" pattern="[a-zA-Z0-9-]+" maxlength="40" required>
-                                        <input type='hidden' name="id" value="@child.Id" />
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-danger" data-dismiss="modal">Zamknij</button>
-                                        <input class="btn btn-primary" type="submit" value="Zmień" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                    <form asp-action="MoveElement" method="post">
-                        <!-- Modal Przenieś-->
-            <div class="modal fade" id="moveModal@(child.Id)" tabindex="-1" role="dialog"
-                aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="exampleModalLongTitle">Przenieś element</h5>
-                                    </div>
-                                    <div class="modal-body">
-                                        Wybierz gdzie chcesz przenieść element:
-                                        <select class="form-select" multiple aria-label="multiple select example" name="newId">
-                                            <option value="@Model.Id">@Model.Folder</option>
-                                            @foreach (var element in values)
-                                            {
-                                                <option value="@element.Key">@element.Value</option>
-                                            }
-                                        </select>
-                                        <input type='hidden' name="id" value="@child.Id" />
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-danger" data-dismiss="modal">Zamknij</button>
-                                        <input class="btn btn-primary" type="submit" value="Przenieś" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                    <ul class="nested">
-                        @if (child.InverseParent.Count > 0)
-                        {
-                            await DisplayChildren(child.InverseParent, values);
-                        }
-                    </ul>
-                </li>
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = "";
+
+            if (message) {
+                const messageLabel = document.createElement('label');
+                messageLabel.innerText = message;
+                modalContent.appendChild(messageLabel);
             }
-        }
-    }
-}
 
-@functions
-{
-    private async Task GetAllItems(ICollection<TreeStructure.Models.Tree> children, Dictionary<int, string> lista)
-    {
-        if (children.Any())
-        {
-            @foreach (var child in children)
-            {
-                lista.Add(@child.Id, @child.Folder);
-                @if (child.InverseParent.Count > 0)
-                {
-                    await GetAllItems(child.InverseParent, lista);
+            if (inputName === 'newId') {
+                const select = document.createElement('select');
+                select.name = 'newId';
+                select.className = 'form-select';
+                select.required = true;
+
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.disabled = true;
+                defaultOption.selected = true;
+                defaultOption.innerText = 'Wybierz nowego rodzica...';
+                select.appendChild(defaultOption);
+
+                // Dodawanie opcji z ViewBag.Values w sposób bezpieczny
+                const options = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.Values));
+                for (const [key, value] of Object.entries(options)) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.innerText = value;
+                    select.appendChild(option);
                 }
+
+                modalContent.appendChild(select);
+            } else if (inputName) {
+                const inputField = document.createElement('input');
+                inputField.type = "text";
+                inputField.name = inputName;
+                inputField.className = "form-control";
+                inputField.required = true;
+                modalContent.appendChild(inputField);
             }
         }
-    }
+
+        // Funkcja do obsługi rozwijania i zwijania drzewa
+        document.addEventListener("DOMContentLoaded", function () {
+            const togglers = document.querySelectorAll(".caret");
+
+            togglers.forEach((caret) => {
+                caret.addEventListener("click", function () {
+                    this.classList.toggle("caret-down");
+                    const nested = this.nextElementSibling;
+                    if (nested) {
+                        nested.classList.toggle("active");
+                    }
+                });
+            });
+        });
+    </script>
 }

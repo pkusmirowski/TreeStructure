@@ -1,7 +1,20 @@
 ﻿@model TreeStructure.VM.ErrorViewModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = "Błąd";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<div class="alert alert-danger" role="alert">
+    <h4 class="alert-heading">Ups! Coś poszło nie tak.</h4>
+    <p>Wystąpił błąd podczas przetwarzania Twojego żądania. Spróbuj ponownie później.</p>
+
+    @if (Model.ShowRequestId)
+    {
+        <hr />
+        <p class="mb-0"><strong>ID żądania:</strong> @Model.RequestId</p>
+    }
+</div>
+
+<p>
+    <a class="btn btn-primary" href="javascript:history.back()">Wróć do poprzedniej strony</a>
+    <a class="btn btn-secondary" href="/">Przejdź na stronę główną</a>
+</p>

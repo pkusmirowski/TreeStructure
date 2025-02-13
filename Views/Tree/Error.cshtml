@@ -3,9 +3,10 @@
     ViewData["Title"] = "Błąd";
 }
 
-<div class="alert alert-danger" role="alert">
+<div class="alert alert-danger" role="alert" aria-live="assertive">
     <h4 class="alert-heading">Ups! Coś poszło nie tak.</h4>
     <p>Wystąpił błąd podczas przetwarzania Twojego żądania. Spróbuj ponownie później.</p>
+    <p>Jeśli problem będzie się powtarzał, skontaktuj się z administratorem.</p>
 
     @if (Model.ShowRequestId)
     {

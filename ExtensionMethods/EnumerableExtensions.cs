@@ -3,25 +3,52 @@
     public static class EnumerableExtensions
     {
         /// <summary>
-        /// Wybiera elementy z kolekcji rekurencyjnie, używając określonej funkcji selektora.
+        /// Selects elements from a collection recursively using the specified selector function.
         /// </summary>
-        /// <typeparam name="T">Typ elementów w kolekcji.</typeparam>
-        /// <param name="source">Kolekcja źródłowa do przetworzenia.</param>
-        /// <param name="selector">Funkcja do wyboru elementów podrzędnych dla każdego elementu w kolekcji.</param>
-        /// <returns>Zwraca kolekcję elementów wybranych rekurencyjnie.</returns>
+        /// <typeparam name="T">The type of elements in the collection.</typeparam>
+        /// <param name="source">The source collection to process.</param>
+        /// <param name="selector">The function to select child elements for each element in the collection.</param>
+        /// <returns>Returns a collection of elements selected recursively.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the source or selector is null.</exception>
         public static IEnumerable<T> SelectRecursive<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> selector)
         {
-            // Przechodzi przez wszystkie elementy w kolekcji źródłowej
-            foreach (var parent in source)
-            {
-                // Zwraca bieżący element (rodzic)
-                yield return parent;
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (selector == null) throw new ArgumentNullException(nameof(selector));
 
-                // Wybiera elementy podrzędne dla bieżącego elementu i przetwarza je rekurencyjnie
-                foreach (var child in selector(parent).SelectRecursive(selector))
+            var stack = new Stack<IEnumerator<T>>();
+            var enumerator = source.GetEnumerator();
+
+            try
+            {
+                while (true)
                 {
-                    // Zwraca przetworzone elementy podrzędne
-                    yield return child;
+                    if (enumerator.MoveNext())
+                    {
+                        var current = enumerator.Current;
+                        yield return current;
+
+                        var children = selector(current);
+                        if (children != null)
+                        {
+                            stack.Push(enumerator);
+                            enumerator = children.GetEnumerator();
+                        }
+                    }
+                    else
+                    {
+                        if (stack.Count == 0) break;
+
+                        enumerator.Dispose();
+                        enumerator = stack.Pop();
+                    }
+                }
+            }
+            finally
+            {
+                enumerator.Dispose();
+                while (stack.Count > 0)
+                {
+                    stack.Pop().Dispose();
                 }
             }
         }

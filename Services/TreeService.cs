@@ -1,16 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TreeStructure.Models;
 using TreeStructure.VM;
+using Microsoft.Extensions.Logging;
 
 namespace TreeStructure.Services
 {
     public class TreeService : ITreeService
     {
         private readonly TreeDBContext _context;
+        private readonly ILogger<TreeService> _logger;
 
-        public TreeService(TreeDBContext context)
+        public TreeService(TreeDBContext context, ILogger<TreeService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<TreeVM?> DisplayTreeAsync()
@@ -32,34 +35,32 @@ namespace TreeStructure.Services
             };
         }
 
-public async Task<bool> AddElementAsync(int id, string name)
-{
-    if (id == 0 || string.IsNullOrWhiteSpace(name))
-    {
-        return false;
-    }
-
-    try
-    {
-        var newElement = new Tree
+        public async Task<bool> AddElementAsync(int id, string name)
         {
-            Folder = name,
-            ParentId = id
-        };
+            if (id == 0 || string.IsNullOrWhiteSpace(name))
+            {
+                return false;
+            }
 
-        await _context.AddAsync(newElement);
-        await _context.SaveChangesAsync();
+            try
+            {
+                var newElement = new Tree
+                {
+                    Folder = name,
+                    ParentId = id
+                };
 
-        return true;
-    }
-    catch (DbUpdateException ex)
-    {
-        // Logowanie błędu
-        Console.WriteLine($"Błąd podczas dodawania elementu: {ex.Message}");
-        return false;
-    }
-}
+                await _context.AddAsync(newElement);
+                await _context.SaveChangesAsync();
 
+                return true;
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError($"Error adding element: {ex.Message}");
+                return false;
+            }
+        }
 
         public async Task<bool> DeleteElementAsync(int id)
         {
@@ -67,7 +68,7 @@ public async Task<bool> AddElementAsync(int id, string name)
 
             try
             {
-                var node = GetNodeById(id);
+                var node = await GetNodeByIdAsync(id);
                 if (node == null)
                 {
                     return false;
@@ -75,12 +76,16 @@ public async Task<bool> AddElementAsync(int id, string name)
 
                 await DeleteChildrenRecursively(node);
 
+                _context.Remove(node);
+                await _context.SaveChangesAsync();
+
                 await transaction.CommitAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+                _logger.LogError($"Error deleting element: {ex.Message}");
                 return false;
             }
         }
@@ -92,7 +97,7 @@ public async Task<bool> AddElementAsync(int id, string name)
                 return false;
             }
 
-            var node = GetNodeById(id);
+            var node = await GetNodeByIdAsync(id);
             if (node == null)
             {
                 return false;
@@ -112,7 +117,7 @@ public async Task<bool> AddElementAsync(int id, string name)
                 return false;
             }
 
-            var node = GetNodeById(id);
+            var node = await GetNodeByIdAsync(id);
             if (node == null)
             {
                 return false;
@@ -139,11 +144,11 @@ public async Task<bool> AddElementAsync(int id, string name)
             return treeList;
         }
 
-        private Tree? GetNodeById(int id)
+        private async Task<Tree?> GetNodeByIdAsync(int id)
         {
-            return _context.Trees
+            return await _context.Trees
                 .Include(x => x.InverseParent)
-                .FirstOrDefault(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
         private async Task DeleteChildrenRecursively(Tree node)
@@ -153,9 +158,6 @@ public async Task<bool> AddElementAsync(int id, string name)
                 await DeleteChildrenRecursively(child);
                 _context.Remove(child);
             }
-
-            _context.Remove(node);
-            await _context.SaveChangesAsync();
         }
     }
 }

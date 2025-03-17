@@ -35,4 +35,4 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Tree}/{action=Tree}");
 
-app.Run();
+await app.RunAsync();

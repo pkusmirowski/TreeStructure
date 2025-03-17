@@ -1,38 +1,23 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TreeStructure.Models
 {
-    /// <summary>
-    /// Model reprezentujący węzeł drzewa w strukturze danych.
-    /// </summary>
     public class Tree
     {
-        /// <summary>
-        /// Identyfikator węzła drzewa.
-        /// </summary>
+        [Key]
         public int Id { get; set; }
 
-        /// <summary>
-        /// Nazwa folderu w drzewie.
-        /// </summary>
-        [Required(ErrorMessage = "Pole 'Folder' jest wymagane.")]
-        [StringLength(40, ErrorMessage = "Pole 'Folder' może mieć maksymalnie 40 znaków.")]
-        [RegularExpression("^[a-zA-Z0-9-]+$", ErrorMessage = "Pole 'Folder' może zawierać tylko litery, cyfry i myślniki.")]
-        public string Folder { get; set; } = null!;
+        [Required(ErrorMessage = "Folder name is required.")]
+        [StringLength(40, ErrorMessage = "Folder name can be a maximum of 40 characters.")]
+        [RegularExpression("^[a-zA-Z0-9-]+$", ErrorMessage = "Folder name can only contain letters, numbers, and hyphens.")]
+        public string? Folder { get; set; }
 
-        /// <summary>
-        /// Identyfikator rodzica (jeśli istnieje).
-        /// </summary>
         public int? ParentId { get; set; }
 
-        /// <summary>
-        /// Referencja do nadrzędnego węzła.
-        /// </summary>
+        [ForeignKey("ParentId")]
         public virtual Tree? Parent { get; set; }
 
-        /// <summary>
-        /// Kolekcja dzieci węzła.
-        /// </summary>
-        public virtual ICollection<Tree> InverseParent { get; set; } = new HashSet<Tree>();
+        public virtual ICollection<Tree> InverseParent { get; set; } = new List<Tree>();
     }
 }

@@ -1,42 +1,44 @@
 ﻿@model TreeStructure.Models.Tree
 
-<li>
-    <span>@Model.Folder</span>
-    <div class="btn-group">
-        <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            Opcje
-        </button>
-        <ul class="dropdown-menu">
-            <li>
-                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
-                        onclick="setModalData('@Model.Id', 'Dodaj element', '/Tree/AddElement', 'name', 'Wprowadź nazwę elementu:')">
-                    Dodaj
-                </button>
-            </li>
-            <li>
-                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
-                        onclick="setModalData('@Model.Id', 'Usuń element', '/Tree/DeleteElement', '', 'Czy na pewno chcesz usunąć ten element?')">
-                    Usuń
-                </button>
-            </li>
-            <li>
-                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
-                        onclick="setModalData('@Model.Id', 'Edytuj element', '/Tree/EditElement', 'name', 'Podaj nową nazwę elementu:')">
-                    Edytuj
-                </button>
-            </li>
-            <li>
-                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
-                        onclick="setModalData('@Model.Id', 'Przenieś element', '/Tree/MoveElement', 'newId', 'Wybierz nowego rodzica:')">
-                    Przenieś
-                </button>
-            </li>
-        </ul>
+<li class="list-group-item tree-node" data-id="@Model.Id">
+    <div class="d-flex justify-content-between align-items-center">
+        <span>@Model.Folder</span>
+        <div class="btn-group">
+            <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Options
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
+                            onclick="setModalData('@Model.Id', 'Add Node', '/Tree/AddElement', 'name', 'Enter node name:')">
+                        Add
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
+                            onclick="setModalData('@Model.Id', 'Delete Node', '/Tree/DeleteElement', '', 'Are you sure you want to delete this node and all its children?')">
+                        Delete
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
+                            onclick="setModalData('@Model.Id', 'Rename Node', '/Tree/EditElement', 'name', 'Enter new node name:')">
+                        Rename
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
+                            onclick="setModalData('@Model.Id', 'Move Node', '/Tree/MoveElement', 'newId', 'Enter new parent ID:')">
+                        Move
+                    </button>
+                </li>
+            </ul>
+        </div>
     </div>
 
     @if (Model.InverseParent.Any())
     {
-        <ul>
+        <ul class="list-group mt-2">
             @foreach (var child in Model.InverseParent)
             {
                 @await Html.PartialAsync("_TreeNodePartial", child)
@@ -44,3 +46,53 @@
         </ul>
     }
 </li>
+
+<!-- Action Modal -->
+<div class="modal fade" id="actionModal" tabindex="-1" role="dialog" aria-labelledby="actionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="actionModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="modalForm" method="post">
+                    <input type="hidden" name="id" id="modalId" />
+                    <div id="modalContent"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" form="modalForm" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function setModalData(id, title, action, inputName, message) {
+            document.getElementById('actionModalLabel').innerText = title;
+            document.getElementById('modalForm').action = action;
+            document.getElementById('modalId').value = id;
+
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = "";
+
+            if (message) {
+                const messageLabel = document.createElement('label');
+                messageLabel.innerText = message;
+                modalContent.appendChild(messageLabel);
+            }
+
+            if (inputName) {
+                const inputField = document.createElement('input');
+                inputField.type = "text";
+                inputField.name = inputName;
+                inputField.className = "form-control";
+                inputField.required = true;
+                modalContent.appendChild(inputField);
+            }
+        }
+    </script>
+}

@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TreeStructure.Models;
 using TreeStructure.VM;
-using Microsoft.Extensions.Logging;
 
 namespace TreeStructure.Services
 {
@@ -18,8 +17,9 @@ namespace TreeStructure.Services
 
         public async Task<TreeVM?> DisplayTreeAsync()
         {
-            var lookupId = (await _context.Trees.ToListAsync()).ToLookup(x => x.ParentId);
-            var root = lookupId[null].FirstOrDefault();
+            var root = await _context.Trees
+                .Include(t => t.InverseParent)
+                .FirstOrDefaultAsync(t => t.ParentId == null);
 
             if (root == null)
             {
@@ -31,8 +31,23 @@ namespace TreeStructure.Services
                 Id = root.Id,
                 Folder = root.Folder,
                 ParentId = root.ParentId,
-                InverseParent = root.InverseParent
+                InverseParent = await GetChildrenAsync(root.Id)
             };
+        }
+
+        private async Task<List<Tree>> GetChildrenAsync(int parentId)
+        {
+            var children = await _context.Trees
+                .Where(t => t.ParentId == parentId)
+                .Include(t => t.InverseParent)
+                .ToListAsync();
+
+            foreach (var child in children)
+            {
+                child.InverseParent = await GetChildrenAsync(child.Id);
+            }
+
+            return children;
         }
 
         public async Task<bool> AddElementAsync(int id, string name)
@@ -57,14 +72,29 @@ namespace TreeStructure.Services
             }
             catch (DbUpdateException ex)
             {
-                _logger.LogError($"Error adding element: {ex.Message}");
+                _logger.LogError(ex, "Error adding element");
                 return false;
+            }
+        }
+
+        private async Task DeleteChildrenRecursively(Tree node)
+        {
+            var children = node.InverseParent?.ToList(); // Pobieramy listę dzieci
+
+            if (children != null)
+            {
+                foreach (var child in children)
+                {
+                    await DeleteChildrenRecursively(child); // Rekurencyjne usunięcie dzieci
+                }
+
+                _context.Remove(node); // Usunięcie węzła
             }
         }
 
         public async Task<bool> DeleteElementAsync(int id)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
@@ -74,10 +104,8 @@ namespace TreeStructure.Services
                     return false;
                 }
 
-                await DeleteChildrenRecursively(node);
-
-                _context.Remove(node);
-                await _context.SaveChangesAsync();
+                await DeleteChildrenRecursively(node); // Usunięcie dzieci
+                await _context.SaveChangesAsync(); // Zapisujemy zmiany do bazy
 
                 await transaction.CommitAsync();
                 return true;
@@ -85,7 +113,7 @@ namespace TreeStructure.Services
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError($"Error deleting element: {ex.Message}");
+                _logger.LogError(ex, "Error deleting element");
                 return false;
             }
         }
@@ -112,11 +140,6 @@ namespace TreeStructure.Services
 
         public async Task<bool> MoveElementAsync(int id, int newId)
         {
-            if (id == 0 || newId == 0)
-            {
-                return false;
-            }
-
             var node = await GetNodeByIdAsync(id);
             if (node == null)
             {
@@ -130,20 +153,6 @@ namespace TreeStructure.Services
             return true;
         }
 
-        public async Task<List<TreeVM>> GetTreeListAsync()
-        {
-            var trees = await _context.Trees.ToListAsync();
-
-            var treeList = trees.Select(tree => new TreeVM
-            {
-                Id = tree.Id,
-                Folder = tree.Folder,
-                ParentId = tree.ParentId
-            }).ToList();
-
-            return treeList;
-        }
-
         private async Task<Tree?> GetNodeByIdAsync(int id)
         {
             return await _context.Trees
@@ -151,13 +160,58 @@ namespace TreeStructure.Services
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        private async Task DeleteChildrenRecursively(Tree node)
+        public async Task<List<TreeVM>> GetTreeListAsync()
         {
-            foreach (var child in node.InverseParent.ToList())
+            var trees = await _context.Trees.ToListAsync();
+
+            var treeList = trees.ConvertAll(tree => new TreeVM
             {
-                await DeleteChildrenRecursively(child);
-                _context.Remove(child);
+                Id = tree.Id,
+                Folder = tree.Folder,
+                ParentId = tree.ParentId
+            });
+
+            return treeList;
+        }
+        public async Task<bool> AddNodeAsync(int parentId, string nodeName)
+        {
+            if (string.IsNullOrWhiteSpace(nodeName))
+            {
+                return false;
             }
+
+            try
+            {
+                var newNode = new Tree
+                {
+                    Folder = nodeName,
+                    ParentId = parentId
+                };
+
+                await _context.AddAsync(newNode);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Error adding node");
+                return false;
+            }
+        }
+
+        public async Task<List<Tree>> SearchTreeAsync(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return new List<Tree>();
+            }
+
+            var trees = await _context.Trees
+                .Where(t => t.Folder != null && t.Folder.Contains(name))
+                .ToListAsync();
+
+            return trees;
         }
     }
 }

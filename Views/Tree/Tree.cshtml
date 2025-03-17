@@ -1,16 +1,36 @@
 ﻿@model TreeStructure.VM.TreeVM
 
-<div>
+<div class="container content">
     @if (ViewBag.Success != null)
     {
-        <h4 class="text-success">@ViewBag.Success</h4>
+        <div class="alert alert-success">@ViewBag.Success</div>
     }
     else if (ViewBag.Failure != null)
     {
-        <h4 class="text-danger">@ViewBag.Failure</h4>
+        <div class="alert alert-danger">@ViewBag.Failure</div>
     }
 
-    <ul>
+    <form method="get" asp-action="Search" class="d-flex mb-4">
+        <input type="text" name="query" placeholder="Search..." class="form-control me-2" />
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <button id="toggleNodesButton" class="btn btn-secondary mb-4">Hide All</button>
+
+    <button class="btn btn-success mb-4" data-bs-toggle="modal" data-bs-target="#addNodeModal">Add Node</button>
+
+    @if (ViewBag.SearchResults != null)
+    {
+        <h4>Search Results:</h4>
+        <ul id="searchResults" class="list-group mb-4">
+            @foreach (var result in (IEnumerable<TreeStructure.Models.Tree>)ViewBag.SearchResults)
+            {
+                @await Html.PartialAsync("_TreeNodePartial", result)
+            }
+        </ul>
+    }
+
+    <ul id="treeNodes" class="list-group">
         @if (Model.InverseParent != null && Model.InverseParent.Any())
         {
             @foreach (var node in Model.InverseParent)
@@ -21,23 +41,26 @@
     </ul>
 </div>
 
-<!-- Dynamic modal -->
-<div class="modal fade" id="actionModal" tabindex="-1" role="dialog" aria-labelledby="actionModalLabel" aria-hidden="true">
+<!-- Add Node Modal -->
+<div class="modal fade" id="addNodeModal" tabindex="-1" role="dialog" aria-labelledby="addNodeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="actionModalLabel"></h5>
+                <h5 class="modal-title" id="addNodeModalLabel">Add Node</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="modalForm" method="post">
-                    <input type="hidden" name="id" id="modalId" />
-                    <div id="modalContent"></div>
+                <form method="post" asp-action="AddNode">
+                    <div class="mb-3">
+                        <label for="nodeName" class="form-label">Node Name</label>
+                        <input type="text" class="form-control" id="nodeName" name="nodeName" required>
+                    </div>
+                    <input type="hidden" name="parentId" value="@Model.Id" />
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="submit" form="modalForm" class="btn btn-primary">Save</button>
             </div>
         </div>
     </div>
@@ -105,6 +128,29 @@
                         nested.classList.toggle("active");
                     }
                 });
+            });
+
+            // Hide non-matching nodes after search
+            const searchResults = document.getElementById('searchResults');
+            if (searchResults) {
+                const resultIds = Array.from(searchResults.querySelectorAll('li')).map(li => li.getAttribute('data-id'));
+                const treeNodes = document.getElementById('treeNodes');
+                if (treeNodes) {
+                    Array.from(treeNodes.querySelectorAll('li')).forEach(li => {
+                        if (!resultIds.includes(li.getAttribute('data-id'))) {
+                            li.style.display = 'none';
+                        }
+                    });
+                }
+            }
+
+            // Toggle visibility of all nodes
+            const toggleNodesButton = document.getElementById('toggleNodesButton');
+            toggleNodesButton.addEventListener('click', function () {
+                const treeNodes = document.getElementById('treeNodes');
+                const isHidden = treeNodes.style.display === 'none';
+                treeNodes.style.display = isHidden ? 'block' : 'none';
+                toggleNodesButton.textContent = isHidden ? 'Hide All' : 'Show All';
             });
         });
     </script>

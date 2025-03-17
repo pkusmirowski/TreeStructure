@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TreeStructure.Models;
 using TreeStructure.Services;
-using Microsoft.Extensions.Logging;
 
 namespace TreeStructure.Controllers
 {
@@ -35,6 +34,7 @@ namespace TreeStructure.Controllers
                 await PopulateAllItems(tree.InverseParent, allItems, "");
                 ViewBag.Values = allItems;
 
+                // Transfer TempData to ViewBag
                 ViewBag.Success = TempData["Success"];
                 ViewBag.Failure = TempData["Failure"];
 
@@ -42,7 +42,7 @@ namespace TreeStructure.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error displaying tree");
+                _logger.LogError(ex, "Błąd podczas wyświetlania drzewa");
                 return View("Error");
             }
         }
@@ -70,7 +70,7 @@ namespace TreeStructure.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Failure"] = "Invalid data.";
+                TempData["Failure"] = "Nieprawidłowe dane.";
                 return RedirectToAction("Tree");
             }
 
@@ -78,17 +78,17 @@ namespace TreeStructure.Controllers
             {
                 if (await _treeService.AddElementAsync(id, name))
                 {
-                    TempData["Success"] = "Element added successfully.";
+                    TempData["Success"] = "Element został dodany pomyślnie.";
                     return RedirectToAction("Tree");
                 }
 
-                TempData["Failure"] = "Failed to add element.";
+                TempData["Failure"] = "Nie udało się dodać elementu.";
                 return RedirectToAction("Tree");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error adding element");
-                TempData["Failure"] = "An error occurred while adding the element.";
+                _logger.LogError(ex, "Błąd podczas dodawania elementu");
+                TempData["Failure"] = "Wystąpił błąd podczas dodawania elementu.";
                 return RedirectToAction("Tree");
             }
         }
@@ -98,7 +98,7 @@ namespace TreeStructure.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Failure"] = "Invalid data.";
+                TempData["Failure"] = "Nieprawidłowe dane.";
                 return RedirectToAction("Tree");
             }
 
@@ -106,17 +106,17 @@ namespace TreeStructure.Controllers
             {
                 if (await _treeService.DeleteElementAsync(id))
                 {
-                    TempData["Success"] = "Element deleted successfully.";
+                    TempData["Success"] = "Element został pomyślnie usunięty.";
                     return RedirectToAction("Tree");
                 }
 
-                TempData["Failure"] = "Failed to delete element.";
+                TempData["Failure"] = "Nie udało się usunąć elementu.";
                 return RedirectToAction("Tree");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting element");
-                TempData["Failure"] = "An error occurred while deleting the element.";
+                _logger.LogError(ex, "Błąd podczas usuwania elementu");
+                TempData["Failure"] = "Wystąpił błąd podczas usuwania elementu.";
                 return RedirectToAction("Tree");
             }
         }
@@ -126,7 +126,7 @@ namespace TreeStructure.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["Failure"] = "Invalid data.";
+                TempData["Failure"] = "Nieprawidłowe dane.";
                 return RedirectToAction("Tree");
             }
 
@@ -134,17 +134,17 @@ namespace TreeStructure.Controllers
             {
                 if (await _treeService.EditElementAsync(id, name))
                 {
-                    TempData["Success"] = "Element edited successfully.";
+                    TempData["Success"] = "Element został edytowany pomyślnie.";
                     return RedirectToAction("Tree");
                 }
 
-                TempData["Failure"] = "Failed to edit element.";
+                TempData["Failure"] = "Nie udało się edytować elementu.";
                 return RedirectToAction("Tree");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error editing element");
-                TempData["Failure"] = "An error occurred while editing the element.";
+                _logger.LogError(ex, "Błąd podczas edytowania elementu");
+                TempData["Failure"] = "Wystąpił błąd podczas edytowania elementu.";
                 return RedirectToAction("Tree");
             }
         }
@@ -154,13 +154,13 @@ namespace TreeStructure.Controllers
         {
             if (!int.TryParse(newId, out var newIdInt))
             {
-                TempData["Failure"] = "Invalid new ID.";
+                TempData["Failure"] = "Nieprawidłowy nowy identyfikator.";
                 return RedirectToAction("Tree");
             }
 
             if (!ModelState.IsValid)
             {
-                TempData["Failure"] = "Invalid data.";
+                TempData["Failure"] = "Nieprawidłowe dane.";
                 return RedirectToAction("Tree");
             }
 
@@ -168,19 +168,49 @@ namespace TreeStructure.Controllers
             {
                 if (await _treeService.MoveElementAsync(id, newIdInt))
                 {
-                    TempData["Success"] = "Element moved successfully.";
+                    TempData["Success"] = "Element został przeniesiony pomyślnie.";
                     return RedirectToAction("Tree");
                 }
 
-                TempData["Failure"] = "Failed to move element.";
+                TempData["Failure"] = "Nie udało się przenieść elementu.";
                 return RedirectToAction("Tree");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error moving element");
-                TempData["Failure"] = "An error occurred while moving the element.";
+                _logger.LogError(ex, "Błąd podczas przenoszenia elementu");
+                TempData["Failure"] = "Wystąpił błąd podczas przenoszenia elementu.";
                 return RedirectToAction("Tree");
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddNode(int parentId, string nodeName)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["Failure"] = "Nieprawidłowe dane.";
+                return RedirectToAction("Tree");
+            }
+
+            if (await _treeService.AddNodeAsync(parentId, nodeName))
+            {
+                TempData["Success"] = "Węzeł został dodany pomyślnie.";
+            }
+            else
+            {
+                TempData["Failure"] = "Nie udało się dodać węzła.";
+            }
+
+            return RedirectToAction("Tree");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Search(string query)
+        {
+            var results = await _treeService.SearchTreeAsync(query);
+            ViewBag.SearchResults = results;
+            var tree = await _treeService.DisplayTreeAsync();
+            return View("Tree", tree);
         }
     }
 }

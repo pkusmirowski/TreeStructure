@@ -5,31 +5,31 @@
         <span>@Model.Folder</span>
         <div class="btn-group">
             <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                Options
+                Opcje
             </button>
             <ul class="dropdown-menu">
                 <li>
                     <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
-                            onclick="setModalData('@Model.Id', 'Add Node', '/Tree/AddElement', 'name', 'Enter node name:')">
-                        Add
+                            onclick="setModalData('@Model.Id', 'Dodaj węzeł', '/Tree/AddElement', 'name', 'Wprowadź nazwę węzła:')">
+                        Dodaj
                     </button>
                 </li>
                 <li>
                     <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
-                            onclick="setModalData('@Model.Id', 'Delete Node', '/Tree/DeleteElement', '', 'Are you sure you want to delete this node and all its children?')">
-                        Delete
+                            onclick="setModalData('@Model.Id', 'Usuń węzeł', '/Tree/DeleteElement', '', 'Czy na pewno chcesz usunąć ten węzeł i wszystkie jego elementy podrzędne?')">
+                        Usuń
                     </button>
                 </li>
                 <li>
                     <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
-                            onclick="setModalData('@Model.Id', 'Rename Node', '/Tree/EditElement', 'name', 'Enter new node name:')">
-                        Rename
+                            onclick="setModalData('@Model.Id', 'Zmień nazwę węzła', '/Tree/EditElement', 'name', 'Wprowadź nową nazwę węzła:')">
+                        Zmień nazwę
                     </button>
                 </li>
                 <li>
                     <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#actionModal"
-                            onclick="setModalData('@Model.Id', 'Move Node', '/Tree/MoveElement', 'newId', 'Enter new parent ID:')">
-                        Move
+                            onclick="setModalData('@Model.Id', 'Przenieś węzeł', '/Tree/MoveElement', 'newId', 'Wybierz nowe ID rodzica:')">
+                        Przenieś
                     </button>
                 </li>
             </ul>
@@ -62,8 +62,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="submit" form="modalForm" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                <button type="submit" form="modalForm" class="btn btn-primary">Zapisz</button>
             </div>
         </div>
     </div>

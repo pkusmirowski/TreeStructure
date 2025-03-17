@@ -11,17 +11,17 @@
     }
 
     <form method="get" asp-action="Search" class="d-flex mb-4">
-        <input type="text" name="query" placeholder="Search..." class="form-control me-2" />
-        <button type="submit" class="btn btn-primary">Search</button>
+        <input type="text" name="query" placeholder="Szukaj..." class="form-control me-2" />
+        <button type="submit" class="btn btn-primary">Szukaj</button>
     </form>
 
-    <button id="toggleNodesButton" class="btn btn-secondary mb-4">Hide All</button>
+    <button id="toggleNodesButton" class="btn btn-secondary mb-4">Ukryj wszystkie</button>
 
-    <button class="btn btn-success mb-4" data-bs-toggle="modal" data-bs-target="#addNodeModal">Add Node</button>
+    <button class="btn btn-success mb-4" data-bs-toggle="modal" data-bs-target="#addNodeModal">Dodaj węzeł</button>
 
     @if (ViewBag.SearchResults != null)
     {
-        <h4>Search Results:</h4>
+        <h4>Wyniki wyszukiwania:</h4>
         <ul id="searchResults" class="list-group mb-4">
             @foreach (var result in (IEnumerable<TreeStructure.Models.Tree>)ViewBag.SearchResults)
             {
@@ -46,19 +46,19 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addNodeModalLabel">Add Node</h5>
+                <h5 class="modal-title" id="addNodeModalLabel">Dodaj węzeł</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="post" asp-action="AddNode">
                     <div class="mb-3">
-                        <label for="nodeName" class="form-label">Node Name</label>
+                        <label for="nodeName" class="form-label">Nazwa węzła</label>
                         <input type="text" class="form-control" id="nodeName" name="nodeName" required>
                     </div>
                     <input type="hidden" name="parentId" value="@Model.Id" />
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zamknij</button>
+                        <button type="submit" class="btn btn-primary">Zapisz</button>
                     </div>
                 </form>
             </div>
@@ -150,7 +150,7 @@
                 const treeNodes = document.getElementById('treeNodes');
                 const isHidden = treeNodes.style.display === 'none';
                 treeNodes.style.display = isHidden ? 'block' : 'none';
-                toggleNodesButton.textContent = isHidden ? 'Hide All' : 'Show All';
+                toggleNodesButton.textContent = isHidden ? 'Ukryj wszystkie' : 'Pokaż wszystkie';
             });
         });
     </script>
